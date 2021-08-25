@@ -1,0 +1,26 @@
+Language: Cpp
+BasedOnStyle: Microsoft
+IndentWidth: 4
+AccessModifierOffset: -4
+NamespaceIndentation: All
+BreakBeforeBraces: Custom
+BraceWrapping:
+  SplitEmptyFunction: false
+  AfterEnum: true
+  AfterFunction: true
+  SplitEmptyRecord: false
+AllowShortBlocksOnASingleLine: Always
+AllowShortFunctionsOnASingleLine: All
+AlwaysBreakTemplateDeclarations: Yes
+AllowShortIfStatementsOnASingleLine: Never
+PointerAlignment: Left
+SpaceInEmptyBlock: true
+SpacesInParentheses: false
+AlignAfterOpenBracket: Align
+BinPackArguments: false
+BinPackParameters: false
+ConstructorInitializerAllOnOneLineOrOnePerLine: true
+AllowAllConstructorInitializersOnNextLine: false
+BreakConstructorInitializers: AfterColon
+AllowAllArgumentsOnNextLine: false
+ColumnLimit: 100

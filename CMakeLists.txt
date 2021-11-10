@@ -15,7 +15,7 @@ set(${PROJECT_NAME}_OPTIONAL_FORMAT
         cfg/helper/reflection.hpp
         )
 
-add_library(${PROJECT_NAME} INTERFACE ${${PROJECT_NAME}_CORE_HEADERS} ${${PROJECT_NAME}_OPTIONAL_FORMAT})
+add_library(${PROJECT_NAME} INTERFACE)
 
 target_include_directories(${PROJECT_NAME} INTERFACE ${PROJECT_SOURCE_DIR})
 

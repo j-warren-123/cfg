@@ -4,69 +4,68 @@
 
 #pragma once
 
-#include "helper/common.hpp"
-
-#include <concepts>
-#include <optional>
+#include <string_view>
+#include <utility>
 
 namespace cfg
 {
-    // clang-format off
-
-    // the required fields for a valid option
-    template <class OPTION_T>
-    concept option = named<OPTION_T> && requires(OPTION_T t)
-    {
-        {t.value};
-        {OPTION_T::value_type_name} -> std::convertible_to<const char*>;
-        {OPTION_T::description} -> std::convertible_to<const char*>;
-    };
-
     // helpful in defining the value_type of the value in an option
-    template<option OPTION_T>
-    using value_t = decltype(std::declval<OPTION_T>().value);
+    template <class OPTION>
+    using value_t = decltype(std::declval<OPTION>().value);
 
-    template <class OPTION_T>
-    concept has_unit = requires()
-    {
-        {OPTION_T::unit} -> std::convertible_to<const char*>;
-    };
+    template <class T, typename = void>
+    struct has_unit : std::false_type
+    { };
 
-    template <class OPTION_T>
-    concept has_validate = option<OPTION_T> && requires(value_t<OPTION_T> v)
-    {
-        {OPTION_T::validate(v)} -> std::convertible_to<error_msg>;
-    };
-    // clang-format on
+    template <class T>
+    struct has_unit<T, std::void_t<decltype(std::declval<T>().unit)>>
+        : std::is_same<decltype(std::declval<T>().unit), const char*>
+    { };
 
-    // if the option has a unit field, then use that
-    template <has_unit T>
-    constexpr const char* get_unit()
-    {
-        return T::unit;
-    }
-
-    // otherwise use N/A
     template <class T>
     constexpr const char* get_unit()
     {
+        if constexpr (has_unit<T>::value)
+            return std::remove_reference_t<T>::unit;
         return "N/A";
     }
 
-    // if the option has a validate function taking the type of the value field, use that.
-    // the validate function returns a error message is something went wrong
-    template <has_validate OPTION>
-    error_msg validate(const value_t<OPTION>& v)
+    template <class T, typename = void>
+    struct has_validate : std::false_type
+    { };
+
+    template <class T>
+    struct has_validate<T, std::void_t<decltype(&T::validate)>>
+        : std::is_invocable_r<void, decltype(&T::validate), decltype(std::declval<T>().value)>
+    { };
+
+    template <class T>
+    void validate(const value_t<T>& value)
     {
-        return OPTION::validate(v);
+        if constexpr (has_validate<T>::value)
+            T::validate(value);
     }
 
-    // so if there is no validate function, then we can just return an empty error message
-    // i.e. no error
-    template <class OPTION>
-    error_msg validate(const value_t<OPTION>& v)
-    {
-        return {};
-    }
+    template <class T, typename = void>
+    struct has_convert_to_string : std::false_type
+    { };
+
+    template <class T>
+    struct has_convert_to_string<T, std::void_t<decltype(&T::convert_to_string)>>
+        : std::is_invocable_r<std::string,
+                              decltype(&T::convert_to_string),
+                              decltype(std::declval<T>().value)>
+    { };
+
+    template <class T, typename = void>
+    struct has_convert_from_string : std::false_type
+    { };
+
+    template <class T>
+    struct has_convert_from_string<T, std::void_t<decltype(&T::convert_from_string)>>
+        : std::is_invocable_r<decltype(std::declval<T>().value),
+                              decltype(&T::convert_from_string),
+                              std::string_view>
+    { };
 
 } // namespace cfg

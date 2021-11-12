@@ -4,50 +4,29 @@
 
 #pragma once
 
-#include "cfg/helper/common.hpp"
 #include "cfg/option.hpp"
 
 namespace cfg
 {
-    template <class SECTION_T, class OPTIONS_T = std::tuple<>>
-    class section : public SECTION_T
+    // sections can inherit from this, or define the get_option function
+    template <class SECTION, class... OPTIONS>
+    class section_base
     {
     public:
-        using SECTION_T::name;
+        using parent_section_t = SECTION;
+        using options_t = std::tuple<OPTIONS...>;
 
     public:
-        using section_t = SECTION_T;
-        using options_t = OPTIONS_T;
+        section_base() = default;
 
     public:
-        section() = default;
-
-    public:
-        template <option OPTION>
-        OPTION& get()
+        template <class OPTION>
+        const OPTION& get_option() const
         {
             return std::get<OPTION>(options);
         }
 
     public:
-        OPTIONS_T options;
+        options_t options;
     };
-
-    template <class SECTION>
-    using section_t = typename SECTION::section_t;
-
-    template <class USER_SECTION_T>
-    struct section_builder : private USER_SECTION_T
-    {
-    private:
-        using USER_SECTION_T::name;
-
-    public:
-        template <option... OPTIONS>
-        struct add_options
-        {
-            using type = section<USER_SECTION_T, std::tuple<OPTIONS...>>;
-        };
-    };
-
 } // namespace cfg

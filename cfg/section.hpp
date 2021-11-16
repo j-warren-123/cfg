@@ -26,6 +26,12 @@ namespace cfg
             return std::get<OPTION>(options);
         }
 
+        template <class OPTION>
+        const value_t<OPTION>& get_value_from() const
+        {
+            return std::get<OPTION>(options).value;
+        }
+
     public:
         options_t options;
     };

@@ -25,6 +25,12 @@ namespace cfg
             return std::get<typename SECTION::parent_section_t>(_sections);
         }
 
+        template <class SECTION, class OPTION>
+        const value_t<OPTION>& get_value_from()
+        {
+            return get_section<SECTION>().template get_value_from<OPTION>();
+        }
+
     public:
         template <class SECTION_FUNCTION, class OPTION_FUNCTION>
         void for_each(const SECTION_FUNCTION& to_section, const OPTION_FUNCTION& to_option)

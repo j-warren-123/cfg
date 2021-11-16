@@ -1,3 +1,5 @@
+#pragma once
+
 //
 // Created by xzato on 12/11/21.
 //
@@ -8,17 +10,16 @@
 
 namespace cfg::type_conversion
 {
-    template<class OPTION_T>
+    template<class VALUE_TYPE>
     struct chrono
     {
-        using value_t = value_t<OPTION_T>;
 
-        static value_t convert_from_string(const std::string_view& input)
+        static VALUE_TYPE convert_from_string(const std::string_view& input)
         {
-            return value_t{std::stoi(std::string{input})};
+            return VALUE_TYPE{std::stoi(std::string{input})};
         }
 
-        static std::string convert_to_string(const value_t& input)
+        static std::string convert_to_string(const VALUE_TYPE& input)
         {
             return std::to_string(input.count());
         }

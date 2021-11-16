@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.20)
+cmake_minimum_required(VERSION 3.16)
 project(cfg)
 
 set(CMAKE_CXX_STANDARD 20)
@@ -14,7 +14,7 @@ set(${PROJECT_NAME}_CORE_HEADERS
         cfg/type_conversions/chrono_durations.hpp
         )
 
-add_library(${PROJECT_NAME} INTERFACE ${${PROJECT_NAME}_CORE_HEADERS})
+add_library(${PROJECT_NAME} INTERFACE)
 
 target_include_directories(${PROJECT_NAME} INTERFACE ${PROJECT_SOURCE_DIR})
 

@@ -39,8 +39,13 @@ namespace cfg
                 FORMAT::exists(format_data, section_type::name, option_type::name);
 
                 value_t<option_type> parsed_option_value;
+
+                if constexpr (is_container<value_t<option_type>>::value)
+                {
+                    parsed_option_value = FORMAT::get(format_data, section_type::name, option_obj);
+                }
                 // if there is a convert function, then use that
-                if constexpr (has_convert_from_string<option_type>::value)
+                else if constexpr (has_convert_from_string<option_type>::value)
                 {
                     // if it does, parse it and return it as the type of the option value
                     parsed_option_value = option_type::convert_from_string(

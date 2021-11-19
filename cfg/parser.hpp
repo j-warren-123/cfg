@@ -29,57 +29,40 @@ namespace cfg
             format_data_t format_data = FORMAT::parse(input_data);
             CONFIGURATION_T returned_config; // initially empty
 
-            returned_config.for_each([&format_data, &returned_config](const auto& section_obj,
-                                                                      auto& option_obj) {
-                // get the type of the option_obj
-                using option_type = std::remove_reference_t<decltype(option_obj)>;
-                using section_type = std::remove_reference_t<decltype(section_obj)>;
+            returned_config.for_each(
+                [&format_data, &returned_config](const auto& section_obj, auto& option_obj) {
+                    // get the type of the option_obj
+                    using option_type = std::remove_reference_t<decltype(option_obj)>;
+                    using section_type = std::remove_reference_t<decltype(section_obj)>;
 
-                // check if the field exists using the FORMAT
-                FORMAT::exists(format_data, section_type::name, option_type::name);
+                    // check if the field exists using the FORMAT
+                    FORMAT::exists(format_data, section_type::name, option_type::name);
 
-                value_t<option_type> parsed_option_value;
+                    // TODO: add ability to parse UD types
+                    value_t<option_type> parsed_option_value =
+                        FORMAT::get(format_data, section_type::name, option_obj);
 
-                if constexpr (is_container<value_t<option_type>>::value)
-                {
-                    parsed_option_value = FORMAT::get(format_data, section_type::name, option_obj);
-                }
-                // if there is a convert function, then use that
-                else if constexpr (has_convert_from_string<option_type>::value)
-                {
-                    // if it does, parse it and return it as the type of the option value
-                    parsed_option_value = option_type::convert_from_string(
-                        FORMAT::template get<option_type, std::string>(format_data,
-                                                                       section_type::name,
-                                                                       option_obj));
-                }
-                // otherwise, default to the underlying library to do the conversion
-                else
-                {
-                    parsed_option_value = FORMAT::get(format_data, section_type::name, option_obj);
-                }
-
-                // if there is a validate function, then validate it
-                if constexpr (has_validate<option_type>::value)
-                {
-                    try
+                    // if there is a validate function, then validate it
+                    if constexpr (has_validate<option_type>::value)
                     {
-                        option_type::validate(parsed_option_value);
+                        try
+                        {
+                            option_type::validate(parsed_option_value);
+                        }
+                        catch (std::exception& ex)
+                        {
+                            throw std::runtime_error{fmt::format(
+                                "> [{}]:[{}] validation failure with value: [{}], error: {}\n",
+                                section_type::name,
+                                option_type::name,
+                                format_data[section_type::name][option_type::name].dump(),
+                                ex.what())};
+                        }
                     }
-                    catch (std::exception& ex)
-                    {
-                        throw std::runtime_error{fmt::format(
-                            "> [{}]:[{}] validation failure with value: [{}], error: {}\n",
-                            section_type::name,
-                            option_type::name,
-                            format_data[section_type::name][option_type::name].dump(),
-                            ex.what())};
-                    }
-                }
 
-                // and if all these pass, then move the parsed value into the option value field
-                option_obj.value = std::move(parsed_option_value);
-            });
+                    // and if all these pass, then move the parsed value into the option value field
+                    option_obj.value = std::move(parsed_option_value);
+                });
 
             return returned_config;
         }
@@ -96,22 +79,11 @@ namespace cfg
                     using option_type = std::remove_reference_t<decltype(option_obj)>;
                     using section_type = std::remove_reference_t<decltype(section_obj)>;
 
-                    // if there is a convert function, then use that
-                    if constexpr (has_convert_to_string<option_type>::value)
-                    {
-                        FORMAT::add(format_data,
-                                    std::remove_reference_t<decltype(section_obj)>::name,
-                                    std::remove_reference_t<decltype(option_obj)>::name,
-                                    option_type::convert_to_string(option_obj.value));
-                    }
-                    // otherwise, default to the underlying library to do the conversion
-                    else
-                    {
-                        FORMAT::add(format_data,
-                                    std::remove_reference_t<decltype(section_obj)>::name,
-                                    std::remove_reference_t<decltype(option_obj)>::name,
-                                    option_obj.value);
-                    }
+                    // TODO: allow convert to string on UD types
+                    FORMAT::add(format_data,
+                                std::remove_reference_t<decltype(section_obj)>::name,
+                                std::remove_reference_t<decltype(option_obj)>::name,
+                                option_obj.value);
                 });
 
             return FORMAT::string(format_data);

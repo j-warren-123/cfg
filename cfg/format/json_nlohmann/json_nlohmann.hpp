@@ -41,12 +41,14 @@ namespace cfg::formats
                            const char* option_name)
         {
             if (!format_data.contains(section_name))
-                throw std::runtime_error{fmt::format("> missing [{}]\n", section_name)};
+                throw std::runtime_error{fmt::format("> cannot find section [{}] for option [{}]",
+                                                     section_name,
+                                                     option_name)};
 
             // check the section contains the specified name
             if (!format_data[section_name].contains(option_name))
                 throw std::runtime_error{
-                    fmt::format("> [{}] missing [{}]\n", section_name, option_name)};
+                    fmt::format("> section [{}] doesn't contain option [{}]", section_name, option_name)};
         }
 
         template <class OPTION_TYPE, class RETURN_TYPE = value_t<OPTION_TYPE>>
@@ -60,7 +62,7 @@ namespace cfg::formats
             }
             catch (std::exception& e)
             {
-                throw std::runtime_error{fmt::format("> [{}]:[{}] parse failure with error: {}",
+                throw std::runtime_error{fmt::format("> in section [{}], option [{}] parse failure with error: {}",
                                                      section_name,
                                                      OPTION_TYPE::name,
                                                      e.what())};

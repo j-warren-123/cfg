@@ -20,13 +20,13 @@ namespace cfg
 
     public:
         template <class SECTION>
-        const SECTION& get_section()
+        const SECTION& get_section() const
         {
             return std::get<typename SECTION::parent_section_t>(_sections);
         }
 
         template <class SECTION, class OPTION>
-        const value_t<OPTION>& get_value_from()
+        const value_t<OPTION>& get_value_from() const
         {
             return get_section<SECTION>().template get_value_from<OPTION>();
         }
@@ -90,28 +90,30 @@ namespace cfg
                 [&formatted_data, &option_format_string](const auto& section_obj,
                                                          const auto& option_obj) {
                     // get the type of the option_obj
-                    using option_type = std::remove_reference_t<decltype(option_obj)>;
-                    using section_type = std::remove_reference_t<decltype(section_obj)>;
+                    using option_t = std::remove_reference_t<decltype(option_obj)>;
+                    using section_t = std::remove_reference_t<decltype(section_obj)>;
 
-                    if constexpr (has_convert_to_string<option_type>::value)
+                    if constexpr (has_convert_to_string<option_t>::value)
                     {
                         formatted_data += fmt::format(option_format_string,
-                                                      section_type::name,
-                                                      option_type::name,
-                                                      option_type::convert_to_string(option_obj.value),
-                                                      option_type::value_type_name,
-                                                      option_type::description,
-                                                      get_unit<option_type>());
+                                                      section_t::name,
+                                                      option_t::name,
+                                                      option_t::convert_to_string(option_obj.value),
+                                                      option_t::value_type_name,
+                                                      option_t::description,
+                                                      get_unit<option_t>(),
+                                                      has_validate<option_t>::value);
                     }
                     else
                     {
                         formatted_data += fmt::format(option_format_string,
-                                                      section_type::name,
-                                                      option_type::name,
+                                                      section_t::name,
+                                                      option_t::name,
                                                       option_obj.value,
-                                                      option_type::value_type_name,
-                                                      option_type::description,
-                                                      get_unit<option_type>());
+                                                      option_t::value_type_name,
+                                                      option_t::description,
+                                                      get_unit<option_t>(),
+                                                      has_validate<option_t>::value);
                     }
 
 
@@ -126,6 +128,7 @@ namespace cfg
                                "[default: {2}] "
                                "[unit: {5}] "
                                "[type: {3}]\n"
+                               "[has validator: {6}]\n"
                                "       -- {4}\n");
         }
 

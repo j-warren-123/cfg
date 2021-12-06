@@ -29,40 +29,62 @@ namespace cfg
             format_data_t format_data = FORMAT::parse(input_data);
             CONFIGURATION_T returned_config; // initially empty
 
-            returned_config.for_each(
-                [&format_data, &returned_config](const auto& section_obj, auto& option_obj) {
-                    // get the type of the option_obj
-                    using option_type = std::remove_reference_t<decltype(option_obj)>;
-                    using section_type = std::remove_reference_t<decltype(section_obj)>;
+            std::string errors;
 
-                    // check if the field exists using the FORMAT
+            returned_config.for_each([&errors,
+                                      &format_data,
+                                      &returned_config](const auto& section_obj, auto& option_obj) {
+                // get the type of the option_obj
+                using option_type = std::remove_reference_t<decltype(option_obj)>;
+                using section_type = std::remove_reference_t<decltype(section_obj)>;
+
+                try
+                {
                     FORMAT::exists(format_data, section_type::name, option_type::name);
+                }
+                catch (std::exception& ex)
+                {
+                    errors += fmt::format("{}\n", ex.what());
+                    return;
+                }
 
+                value_t<option_type> parsed_option_value;
+                try
+                {
                     // TODO: add ability to parse UD types
-                    value_t<option_type> parsed_option_value =
-                        FORMAT::get(format_data, section_type::name, option_obj);
+                    parsed_option_value = FORMAT::get(format_data, section_type::name, option_obj);
+                }
+                catch (std::exception& ex)
+                {
+                    errors += fmt::format("{}\n", ex.what());
+                    return;
+                }
 
-                    // if there is a validate function, then validate it
-                    if constexpr (has_validate<option_type>::value)
+                // if there is a validate function, then validate it
+                if constexpr (has_validate<option_type>::value)
+                {
+                    try
                     {
-                        try
-                        {
-                            option_type::validate(parsed_option_value);
-                        }
-                        catch (std::exception& ex)
-                        {
-                            throw std::runtime_error{fmt::format(
-                                "> [{}]:[{}] validation failure with value: [{}], error: {}\n",
-                                section_type::name,
-                                option_type::name,
-                                format_data[section_type::name][option_type::name].dump(),
-                                ex.what())};
-                        }
+                        option_type::validate(parsed_option_value);
                     }
+                    catch (std::exception& ex)
+                    {
+                        errors += fmt::format(
+                            "> [{}]:[{}] validation failure with value: [{}], error: {}\n",
+                            section_type::name,
+                            option_type::name,
+                            format_data[section_type::name][option_type::name].dump(),
+                            ex.what());
+                        return;
+                    }
+                }
 
-                    // and if all these pass, then move the parsed value into the option value field
-                    option_obj.value = std::move(parsed_option_value);
-                });
+                // and if all these pass, then move the parsed value into the option value field
+                option_obj.value = std::move(parsed_option_value);
+            });
+
+            if (!errors.empty())
+                throw std::runtime_error(fmt::format("\n{}", errors));
 
             return returned_config;
         }

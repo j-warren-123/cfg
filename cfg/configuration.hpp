@@ -20,13 +20,13 @@ namespace cfg
 
     public:
         template <class SECTION>
-        const SECTION& get_section() const
+        constexpr const SECTION& get_section() const
         {
             return std::get<typename SECTION::parent_section_t>(_sections);
         }
 
         template <class SECTION, class OPTION>
-        const value_t<OPTION>& get_value_from() const
+        constexpr const value_t<OPTION>& get_value_from() const
         {
             return get_section<SECTION>().template get_value_from<OPTION>();
         }

@@ -7,6 +7,7 @@
 #include "cfg/section.hpp"
 
 #include <fmt/core.h>
+
 #include <iostream>
 #include <tuple>
 
@@ -90,23 +91,19 @@ namespace cfg
         }
 
         template <class CONFIGURATION>
-        static std::string generate_example_config()
+        static std::string generate_example_config(const CONFIGURATION& config = CONFIGURATION{})
         {
             format_data_t format_data;
-            CONFIGURATION temp_config;
 
-            temp_config.for_each(
-                [&temp_config, &format_data](const auto& section_obj, auto& option_obj) {
-                    // get the type of the option_obj
-                    using option_type = std::remove_reference_t<decltype(option_obj)>;
-                    using section_type = std::remove_reference_t<decltype(section_obj)>;
+            config.for_each([&config, &format_data](const auto& section_obj,
+                                                    const auto& option_obj) {
+                // get the type of the option_obj
+                using option_type = std::remove_reference_t<decltype(option_obj)>;
+                using section_type = std::remove_reference_t<decltype(section_obj)>;
 
-                    // TODO: allow convert to string on UD types
-                    FORMAT::add(format_data,
-                                std::remove_reference_t<decltype(section_obj)>::name,
-                                std::remove_reference_t<decltype(option_obj)>::name,
-                                option_obj.value);
-                });
+                // TODO: allow convert to string on UD types
+                FORMAT::add(format_data, section_type::name, option_type::name, option_obj.value);
+            });
 
             return FORMAT::string(format_data);
         }

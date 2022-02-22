@@ -25,6 +25,12 @@ namespace cfg
             return std::get<typename SECTION::parent_section_t>(_sections);
         }
 
+        template <class SECTION>
+        constexpr SECTION& get_section()
+        {
+            return std::get<typename SECTION::parent_section_t>(_sections);
+        }
+
         template <class SECTION, class OPTION>
         constexpr const value_t<OPTION>& get_value_from() const
         {
@@ -53,8 +59,43 @@ namespace cfg
                 _sections);
         }
 
+        template <class SECTION_FUNCTION, class OPTION_FUNCTION>
+        void for_each(const SECTION_FUNCTION& to_section, const OPTION_FUNCTION& to_option) const
+        {
+            auto apply_to_option = [&to_option](auto& section_obj, auto& option_obj) {
+                to_option(section_obj, option_obj);
+            };
+
+            auto apply_to_section = [&to_section, &apply_to_option](auto& section_obj) {
+                to_section(section_obj);
+                std::apply(
+                    [&apply_to_option, &section_obj](auto&... option_obj) {
+                        (apply_to_option(section_obj, option_obj), ...);
+                    },
+                    section_obj.options);
+            };
+
+            std::apply(
+                [&apply_to_section](auto&... section_obj) { (apply_to_section(section_obj), ...); },
+                _sections);
+        }
+
         template <class OPTION_FUNCTION>
         void for_each(const OPTION_FUNCTION& to_option)
+        {
+            auto apply_to_section = [&to_option](auto& section_obj) {
+                std::apply([&to_option, &section_obj](
+                               auto&... option_obj) { (to_option(section_obj, option_obj), ...); },
+                           section_obj.options);
+            };
+
+            std::apply([&apply_to_section](
+                           auto&... section_obj) { ((apply_to_section(section_obj)), ...); },
+                       _sections);
+        }
+
+        template <class OPTION_FUNCTION>
+        void for_each(const OPTION_FUNCTION& to_option) const
         {
             auto apply_to_section = [&to_option](auto& section_obj) {
                 std::apply([&to_option, &section_obj](

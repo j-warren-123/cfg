@@ -27,6 +27,10 @@ namespace cfg
     __VA_ARGS__ value
 #endif
 
+#ifndef DESCRIPTION
+#define DESCRIPTION constexpr static const char* description
+#endif
+
 #ifndef SECTION
 #define SECTION(SECTION_NAME, ...)                                                                 \
     NAMED(SECTION_NAME), public cfg::section_base<SECTION_NAME, __VA_ARGS__>
